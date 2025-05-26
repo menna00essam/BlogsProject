@@ -3,7 +3,7 @@ import api from './api';
 const authService = {
   login: async (credentials) => {
     try {
-      console.log('🚀 Attempting login with:', { email: credentials.email });
+      console.log(' Attempting login with:', { email: credentials.email });
       
 const loginData = {
   usernameOrEmail: credentials.usernameOrEmail, 
@@ -34,7 +34,7 @@ const loginData = {
   
   register: async (userData) => {
     try {
-      console.log('🚀 Attempting register with:', { email: userData.email, username: userData.username });
+      console.log(' Attempting register with:', { email: userData.email, username: userData.username });
       const response = await api.post('/auth/register', userData);
       console.log('Register API success:', response.data);
       return response.data;
