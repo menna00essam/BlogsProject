@@ -8,7 +8,10 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
 
   app.enableCors({
-    origin: 'http://localhost:5173', 
+    origin:  [
+    'http://localhost:5173',                
+    'https://myprojectname-iota.vercel.app',
+  ], 
     credentials: true,               
   });
 
