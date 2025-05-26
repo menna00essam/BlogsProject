@@ -57,7 +57,6 @@ const CommentsSection = ({ postId, initialCommentsCount = 0, onCommentsUpdate })
   const handleCommentAdded = (newComment) => {
     setComments(prevComments => [newComment, ...prevComments]);
 
-    // toast.success('Comment added successfully!');
 
     if (onCommentsUpdate) {
       onCommentsUpdate(comments.length + 1);

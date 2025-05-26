@@ -10,6 +10,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { usePosts } from '../../hooks/usePosts';
 import CommentsSection from './CommentsSection';
 import { Link as RouterLink } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const PostCard = ({ post: initialPost, onPostUpdate, onPostDelete }) => {
   const { user } = useAuth();
@@ -57,7 +59,9 @@ const PostCard = ({ post: initialPost, onPostUpdate, onPostDelete }) => {
         }
       } catch (error) {
         console.error('Failed to delete post:', error);
-        alert('Failed to delete post. Please try again.');
+        toast.error('Failed to delete post. Please try again.');
+        
+        
       } finally {
         setIsDeleting(false);
       }
@@ -70,19 +74,16 @@ const PostCard = ({ post: initialPost, onPostUpdate, onPostDelete }) => {
   setIsLiking(true);
   
   try {
-    // تحديث فوري محلي
     const currentlyLiked = isLiked;
     
     setPost(prevPost => {
       let updatedReactions;
       
       if (currentlyLiked) {
-        // إزالة الـ like
         updatedReactions = prevPost.reactions?.filter(
           r => !((r.user === user._id || r.user?._id === user._id) && r.type === 'like')
         ) || [];
       } else {
-        // إضافة like جديد
         updatedReactions = [
           ...(prevPost.reactions || []),
           {
@@ -101,7 +102,6 @@ const PostCard = ({ post: initialPost, onPostUpdate, onPostDelete }) => {
 
     const updatedPost = await likePost(post._id);
     
-    // تحديث البيانات بالرد من السيرفر
     setPost(updatedPost);
     
     if (onPostUpdate) {
@@ -119,10 +119,12 @@ const PostCard = ({ post: initialPost, onPostUpdate, onPostDelete }) => {
   const handleShare = async () => {
     try {
       await sharePost(post._id);
-      alert('Post shared successfully!');
+      toast.success('Post shared successfully!');
     } catch (error) {
       console.error('Failed to share post:', error);
-      alert('Failed to share post. Please try again.');
+     toast.error('Failed to share post. Please try again.');
+
+      
     }
   };
 

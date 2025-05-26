@@ -45,7 +45,6 @@ const ProfilePage = () => {
         setPosts(userPosts);
         setSharedPosts(shared);
 
-        // toast.success('Profile data loaded successfully!');
       } catch (err) {
         setError(err.message || 'Failed to load profile data');
         toast.error(err.message || 'Failed to load profile data');
