@@ -36,10 +36,10 @@ const loginData = {
     try {
       console.log('🚀 Attempting register with:', { email: userData.email, username: userData.username });
       const response = await api.post('/auth/register', userData);
-      console.log('✅ Register API success:', response.data);
+      console.log('Register API success:', response.data);
       return response.data;
     } catch (error) {
-      console.error('❌ Register API error:', {
+      console.error('Register API error:', {
         status: error.response?.status,
         statusText: error.response?.statusText,
         data: error.response?.data,
