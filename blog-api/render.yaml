@@ -1,9 +1,9 @@
 services:
   - type: web
-    name: nest-backend
+    name: blog-api
     env: node
-    plan: free
     buildCommand: npm install && npm run build
     startCommand: node dist/main.js
-    branch: main
-    pullRequestPreviewsEnabled: true
+    envVars:
+      - key: NODE_ENV
+        value: production
