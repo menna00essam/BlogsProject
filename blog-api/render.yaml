@@ -2,8 +2,15 @@ services:
   - type: web
     name: blog-api
     env: node
+    plan: free
     buildCommand: npm install && npm run build
-    startCommand: node dist/main.js
+    startCommand: npm run start:prod
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 3000
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
