@@ -45,12 +45,11 @@ const Header = () => {
     navigate('/login');
   };
 
-  // Get the current user's profile URL - استخدم user._id أو user.id حسب structure البيانات
   const getProfileUrl = () => {
     if (user && user._id) {
       return `/profile/${user._id}`;
     }
-    return '/profile'; // fallback
+    return '/profile'; 
   };
 
   return (

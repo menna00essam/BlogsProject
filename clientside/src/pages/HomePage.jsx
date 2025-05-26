@@ -55,46 +55,57 @@ export default function HomePage() {
     toast.success('Post deleted successfully!');
   };
 
-  const handleLike = async (postId) => {
-    if (!user || !token) {
-      toast.warning('You need to be logged in to like posts.');
-      return;
-    }
+ const handleLike = async (postId) => {
+  if (!user || !token) {
+    toast.warning('You need to be logged in to like posts.');
+    return;
+  }
 
-    try {
-      const userId = user._id || user.id;
+  try {
+    const userId = user._id || user.id;
 
-      // تحديث متفائل في الواجهة
-      setPosts(prev =>
-        prev.map(post => {
-          if (post._id !== postId) return post;
+    setPosts(prev =>
+      prev.map(post => {
+        if (post._id !== postId) return post;
 
-          const hasLiked = post.reactions?.some(
-            reaction => reaction.user === userId && reaction.type === 'like'
+        const hasLiked = post.reactions?.some(
+          reaction => (reaction.user === userId || reaction.user?._id === userId) && reaction.type === 'like'
+        );
+
+        let updatedReactions;
+        if (hasLiked) {
+          updatedReactions = post.reactions.filter(
+            r => !((r.user === userId || r.user?._id === userId) && r.type === 'like')
           );
+        } else {
+          updatedReactions = [
+            ...(post.reactions || []), 
+            { 
+              user: userId, 
+              type: 'like', 
+              _id: `temp_${Date.now()}` 
+            }
+          ];
+        }
 
-          const updatedReactions = hasLiked
-            ? post.reactions.filter(r => !(r.user === userId && r.type === 'like'))
-            : [...post.reactions, { user: userId, type: 'like', _id: Date.now().toString() }];
+        return { ...post, reactions: updatedReactions };
+      })
+    );
 
-          return { ...post, reactions: updatedReactions };
-        })
-      );
+    const updatedPost = await postsService.likePost(postId, token, userId);
+    
+    setPosts(prev =>
+      prev.map(post =>
+        post._id === postId ? updatedPost : post
+      )
+    );
 
-      // إرسال الطلب للخادم وتحديث حسب الرد
-      const updatedPost = await postsService.likePost(postId, token, userId);
-
-      setPosts(prev =>
-        prev.map(post =>
-          post._id === postId ? { ...post, reactions: updatedPost.reactions } : post
-        )
-      );
-    } catch (err) {
-      console.error('Failed to like post', err);
-      toast.error('Failed to update like');
-      fetchPosts();
-    }
-  };
+  } catch (err) {
+    console.error('Failed to like post', err);
+    toast.error('Failed to update like');
+    fetchPosts();
+  }
+};
 
   const handleShare = async (postId) => {
     try {

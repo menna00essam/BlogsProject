@@ -26,7 +26,6 @@ export class Post {
   @Prop({ default: false })
   isDeleted: boolean;
 
-  // الحقول الجديدة لدعم الـ shared posts
   @Prop({ default: false })
   isShared: boolean;
 

@@ -64,29 +64,57 @@ const PostCard = ({ post: initialPost, onPostUpdate, onPostDelete }) => {
     }
   };
 
-  const handleLike = async () => {
-    if (isLiking) return; // Prevent multiple clicks
+ const handleLike = async () => {
+  if (isLiking || !user) return;
+  
+  setIsLiking(true);
+  
+  try {
+    // تحديث فوري محلي
+    const currentlyLiked = isLiked;
     
-    setIsLiking(true);
-    try {
-      const updatedPost = await likePost(post._id);
+    setPost(prevPost => {
+      let updatedReactions;
       
-      // Update local state immediately
-      setPost(prevPost => ({
-        ...prevPost,
-        reactions: updatedPost.reactions
-      }));
-      
-      // Also update parent component if callback exists
-      if (onPostUpdate) {
-        onPostUpdate(updatedPost);
+      if (currentlyLiked) {
+        // إزالة الـ like
+        updatedReactions = prevPost.reactions?.filter(
+          r => !((r.user === user._id || r.user?._id === user._id) && r.type === 'like')
+        ) || [];
+      } else {
+        // إضافة like جديد
+        updatedReactions = [
+          ...(prevPost.reactions || []),
+          {
+            user: user._id,
+            type: 'like',
+            _id: `temp_${Date.now()}`
+          }
+        ];
       }
-    } catch (error) {
-      console.error('Failed to like post:', error);
-    } finally {
-      setIsLiking(false);
+      
+      return {
+        ...prevPost,
+        reactions: updatedReactions
+      };
+    });
+
+    const updatedPost = await likePost(post._id);
+    
+    // تحديث البيانات بالرد من السيرفر
+    setPost(updatedPost);
+    
+    if (onPostUpdate) {
+      onPostUpdate(updatedPost);
     }
-  };
+    
+  } catch (error) {
+    console.error('Failed to like post:', error);
+    setPost(initialPost);
+  } finally {
+    setIsLiking(false);
+  }
+};
 
   const handleShare = async () => {
     try {

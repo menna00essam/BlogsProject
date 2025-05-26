@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PostForm from '../components/posts/PostForm';
 import postsService from '../services/postsService';
-import { toast } from 'react-toastify';  // استيراد toast من react-toastify
-import 'react-toastify/dist/ReactToastify.css'; // استيراد CSS
+import { toast } from 'react-toastify'; 
+import 'react-toastify/dist/ReactToastify.css'; 
 
 export default function EditPostPage() {
   const { id } = useParams();
