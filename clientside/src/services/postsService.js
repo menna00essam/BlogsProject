@@ -95,19 +95,15 @@ const postsService = {
 
  likePost: async (postId, token, userId) => {
   try {
-    // أولاً نجلب الـ post الحالي لنرى حالة الـ like
     const currentPost = await api.get(`/posts/${postId}`);
     
-    // نتحقق إذا كان المستخدم قد عمل like من قبل
     const existingReaction = currentPost.data.reactions?.find(
       reaction => reaction.user === userId && reaction.type === 'like'
     );
 
     if (existingReaction) {
-      // إذا كان موجود، نحذف الـ like (unlike)
       await api.delete(`/reactions/${existingReaction._id}`);
     } else {
-      // إذا لم يكن موجود، نضيف like جديد
       await api.post('/reactions', {
         user: userId,
         post: postId,
@@ -115,7 +111,6 @@ const postsService = {
       });
     }
 
-    // نجلب الـ post المحدث بعد التعديل
     const updatedPostResponse = await api.get(`/posts/${postId}`);
     return updatedPostResponse.data;
 
@@ -134,7 +129,6 @@ getPostById: async (postId) => {
   }
 },
 
-  // Updated comment methods to work with your backend
   addComment: async (postId, commentData) => {
     try {
       const response = await api.post('/comments', {

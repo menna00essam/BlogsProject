@@ -13,7 +13,6 @@ import EditPostPage from './pages/EditPostPage';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// Create a theme
 const theme = createTheme({
   palette: {
     primary: {
