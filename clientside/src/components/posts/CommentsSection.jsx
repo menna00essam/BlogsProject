@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useEffect } from 'react';
 import {
   Box,
-  Divider,
   Collapse,
   Button,
   CircularProgress,
@@ -16,11 +16,11 @@ import CommentForm from './CommentForm';
 import CommentsList from './CommentsList';
 import postsService from '../../services/postsService';
 
-const CommentsSection = ({ postId, initialCommentsCount = 0, onCommentsUpdate }) => {
+const CommentsSection = ({ postId, onCommentsUpdate }) => {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true); 
   const [commentsLoaded, setCommentsLoaded] = useState(false);
 
   useEffect(() => {
@@ -30,16 +30,24 @@ const CommentsSection = ({ postId, initialCommentsCount = 0, onCommentsUpdate })
     }
   }, [error]);
 
+  useEffect(() => {
+    loadComments();
+  }, [postId]);
+
   const loadComments = async () => {
     if (commentsLoaded) return;
-        
+
     setLoading(true);
     setError('');
-        
+
     try {
       const commentsData = await postsService.getCommentsByPost(postId);
-      setComments(commentsData);
+      setComments(commentsData || []);
       setCommentsLoaded(true);
+      
+      if (onCommentsUpdate) {
+        onCommentsUpdate(commentsData?.length || 0);
+      }
     } catch (err) {
       setError(err.message || 'Failed to load comments');
     } finally {
@@ -57,9 +65,8 @@ const CommentsSection = ({ postId, initialCommentsCount = 0, onCommentsUpdate })
   const handleCommentAdded = (newComment) => {
     setComments(prevComments => [newComment, ...prevComments]);
 
-
     if (onCommentsUpdate) {
-      onCommentsUpdate(comments.length + 1);
+      onCommentsUpdate(prev => (prev || 0) + 1);
     }
 
     if (!expanded) {
@@ -81,39 +88,32 @@ const CommentsSection = ({ postId, initialCommentsCount = 0, onCommentsUpdate })
     });
   };
 
-  const commentsCount = commentsLoaded ? comments.length : initialCommentsCount;
-
   return (
-    <Box>
+    <Box sx={{ px: 2, pb: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
         <Button
           onClick={handleToggleComments}
           startIcon={<CommentIcon />}
           endIcon={expanded ? <ExpandLess /> : <ExpandMore />}
-          sx={{ 
+          sx={{
             textTransform: 'none',
             color: 'text.secondary',
             fontSize: '0.875rem'
           }}
         >
-          {commentsCount} {commentsCount === 1 ? 'Comment' : 'Comments'}
+          {expanded ? 'Hide Comments' : 'Show Comments'} ({comments.length})
         </Button>
       </Box>
 
       <Collapse in={expanded} timeout="auto" unmountOnExit>
-        <Divider sx={{ mb: 2 }} />
-
-        <CommentForm 
-          postId={postId}
-          onCommentAdded={handleCommentAdded}
-        />
+        <CommentForm postId={postId} onCommentAdded={handleCommentAdded} />
 
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-            <CircularProgress size={32} />
+            <CircularProgress size={24} />
           </Box>
         ) : (
-          <CommentsList 
+          <CommentsList
             comments={comments}
             onCommentDeleted={handleCommentDeleted}
           />

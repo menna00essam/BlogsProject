@@ -118,7 +118,7 @@ const PostForm = ({ post = null, onClose, onSuccess }) => {
             sx={{
               flexGrow: 1,
               overflowY: 'auto',
-              paddingRight: 3, // لتفادي قطع السكروول
+              paddingRight: 3, 
             }}
           >
             <Stack direction="row" alignItems="center" spacing={2} mb={3}>

@@ -53,7 +53,12 @@ const Header = () => {
   };
 
   return (
-    <AppBar position="fixed mb-1">
+    <AppBar position="fixed"
+  //     sx={{
+  //   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  //   boxShadow: 'none',
+  // }}
+    >
       <Container maxWidth="xl">
         <Toolbar disableGutters>
           {/* Logo - Desktop */}

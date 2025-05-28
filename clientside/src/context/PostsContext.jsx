@@ -145,16 +145,16 @@ export const PostsProvider = ({ children }) => {
     }
   };
 
-  const sharePost = async (postId) => {
-    try {
-      const sharedPost = await postsService.sharePost(postId);
-      setPosts(prev => [sharedPost, ...prev]);
-      setUserPosts(prev => [sharedPost, ...prev]);
-      return sharedPost;
-    } catch (err) {
-      console.error('Failed to share post', err);
-    }
-  };
+ const sharePost = async (postId) => {
+  try {
+    const sharedPost = await postsService.sharePost(postId);
+    setPosts(prev => [sharedPost, ...prev]); 
+    return sharedPost;
+  } catch (err) {
+    console.error('Failed to share post', err);
+  }
+};
+
 
   const value = {
     posts,

@@ -68,7 +68,6 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
 
-  // Debounced search query
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const fetchPosts = async () => {
@@ -103,7 +102,6 @@ export default function HomePage() {
       result = result.filter(post => {
         const titleMatch = post.title?.toLowerCase().includes(query);
         
-        // Search in description/content
         const descriptionMatch = post.description?.toLowerCase().includes(query) || 
                                 post.content?.toLowerCase().includes(query);
         
@@ -148,24 +146,6 @@ export default function HomePage() {
     handleCloseForm();
   }, []);
 
-const handlePostUpdate = useCallback((updatedPost, isLikeUpdate = false) => {
-  setPosts(prevPosts =>
-    prevPosts.map(post =>
-      post._id === updatedPost._id ? updatedPost : post
-    )
-  );
-  
-  if (!isLikeUpdate) {
-    toast.success('Post updated successfully!');
-  }
-}, []);
-
-  const handlePostDelete = useCallback((deletedPostId) => {
-    setPosts(prevPosts =>
-      prevPosts.filter(post => post._id !== deletedPostId)
-    );
-    toast.success('Post deleted successfully!');
-  }, []);
 
   const handleSearchChange = (event) => {
     const value = event.target.value;
@@ -666,11 +646,8 @@ const handlePostUpdate = useCallback((updatedPost, isLikeUpdate = false) => {
             }
           }}
         >
-          <PostCard
-            post={post}
-            onPostUpdate={handlePostUpdate}
-            onPostDelete={handlePostDelete}
-          />
+        <PostCard post={post} showUserInfo={true} />
+
         </Box>
       ))}
     </Box>
@@ -681,7 +658,7 @@ const handlePostUpdate = useCallback((updatedPost, isLikeUpdate = false) => {
       minHeight: '100vh', 
       bgcolor: 'grey.50',
       pt: 3,
-      pb: 6
+      pb: 6,
     }}>
       <Container maxWidth="xl">
         <Box sx={{ 

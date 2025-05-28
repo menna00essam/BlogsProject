@@ -1,7 +1,10 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect, memo } from 'react';
 import {
   Card, CardHeader, CardMedia, CardContent, CardActions,
-  IconButton, Typography, Avatar, Box, Chip, Tooltip, Fade
+  IconButton, Typography, Avatar, Box, Chip, Tooltip, Fade,
+  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
+  Button
 } from '@mui/material';
 import {
   FavoriteBorder, Favorite, Share, Comment, Edit, Delete
@@ -20,84 +23,63 @@ const PostCard = memo(({ post: initialPost, onPostUpdate, onPostDelete }) => {
   const [showComments, setShowComments] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [commentsCount, setCommentsCount] = useState(initialPost.comments?.length || 0);
 
   useEffect(() => {
     setPost(initialPost);
+    setCommentsCount(initialPost.comments?.length || 0);
   }, [initialPost]);
 
-  if (!post || !post.user) {
+  if (!post?.user) {
     return (
       <Card sx={{ mb: 3, p: 3, textAlign: 'center', borderRadius: 3, border: '1px solid', borderColor: 'error.light' }}>
-        <Typography color="error" variant="body1">
-          Unable to display post: post data is missing.
-        </Typography>
+        <Typography color="error">Unable to display post: post data is missing.</Typography>
       </Card>
     );
   }
 
   const isAuthor = user && post.user && (
-    typeof post.user === 'string'
-      ? String(post.user) === String(user._id)
-      : String(post.user._id) === String(user._id)
+    typeof post.user === 'string' 
+      ? post.user === user._id 
+      : post.user._id === user._id
   );
 
-  const isLiked = user && Array.isArray(post.reactions) &&
-    post.reactions.some(reaction =>
-      (reaction.user === user._id || reaction.user?._id === user._id) &&
-      reaction.type === 'like'
-    );
+  const isLiked = user && post.reactions?.some(r => 
+    (r.user === user._id || r.user?._id === user._id) && r.type === 'like'
+  );
 
-  const getImageUrl = (imageUrl) => {
-    if (!imageUrl) return null;
-    if (imageUrl.startsWith('http')) return imageUrl;
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    return `${baseUrl}/${imageUrl}`;
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    return `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${url}`;
   };
 
-  const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this post?')) {
-      setIsDeleting(true);
-      try {
-        await deletePost(post._id);
-        onPostDelete?.(post._id);
-      } catch (error) {
-        console.error('Failed to delete post:', error);
-        toast.error('Failed to delete post. Please try again.');
-      } finally {
-        setIsDeleting(false);
-      }
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      await deletePost(post._id);
+      onPostDelete?.(post._id);
+      toast.success('Post deleted successfully');
+    } catch (error) {
+      toast.error('Failed to delete post');
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
     }
   };
 
   const handleLike = async (e) => {
     e.preventDefault();
-    e.stopPropagation();
     if (isLiking || !user) return;
     setIsLiking(true);
 
     try {
-      const updatedPost = {
-        ...post,
-        reactions: isLiked
-          ? post.reactions.filter(r =>
-              !((r.user === user._id || r.user?._id === user._id) && r.type === 'like')
-            )
-          : [...post.reactions, {
-              user: user._id,
-              type: 'like',
-              _id: `temp_${Date.now()}`
-            }]
-      };
+      const updatedPost = await likePost(post._id);
       setPost(updatedPost);
       onPostUpdate?.(updatedPost, true);
-
-      const serverUpdatedPost = await likePost(post._id);
-      setPost(serverUpdatedPost);
-      onPostUpdate?.(serverUpdatedPost, true);
     } catch (error) {
-      console.error('Failed to like post:', error);
-      setPost(initialPost);
-      onPostUpdate?.(initialPost, true);
+      toast.error('Failed to like post');
     } finally {
       setIsLiking(false);
     }
@@ -109,146 +91,156 @@ const PostCard = memo(({ post: initialPost, onPostUpdate, onPostDelete }) => {
       await sharePost(post._id);
       toast.success('Post shared successfully!');
     } catch (error) {
-      console.error('Failed to share post:', error);
-      toast.error('Failed to share post. Please try again.');
+      toast.error('Failed to share post');
     }
   };
 
-  const toggleComments = (e) => {
-    e.preventDefault();
+  const handleCommentsToggle = () => {
     setShowComments(!showComments);
   };
 
-  const getAvatarText = (username) => {
-    return username ? username.charAt(0).toUpperCase() : '?';
-  };
-
-  const formatDate = (dateString) => {
-    try {
-      const date = new Date(dateString);
-      const now = new Date();
-      const diffInMinutes = Math.floor((now - date) / (1000 * 60));
-      if (diffInMinutes < 1) return 'just now';
-      if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-      if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-      return `${Math.floor(diffInMinutes / 1440)}d ago`;
-    } catch {
-      return 'Unknown date';
+  const handleCommentsUpdate = (newCount) => {
+    if (typeof newCount === 'function') {
+      setCommentsCount(prev => newCount(prev));
+    } else {
+      setCommentsCount(newCount);
     }
   };
 
-  const handleCommentsUpdate = (newCommentsCount) => {
-    setPost(prev => ({
-      ...prev,
-      comments: [...Array(newCommentsCount)]
-    }));
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
   const likesCount = post.reactions?.filter(r => r.type === 'like').length || 0;
-  const commentsCount = post.comments?.length || 0;
 
   return (
-    <Fade in timeout={300}>
-      <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', opacity: isDeleting ? 0.5 : 1 }}>
-        <CardHeader
-          avatar={
-            <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48, fontSize: '1.2rem', fontWeight: 'bold' }}>
-              {typeof post.user === 'string'
-                ? post.user.charAt(0).toUpperCase()
-                : getAvatarText(post.user.username)}
-            </Avatar>
-          }
-          title={
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="subtitle1" fontWeight="bold">
-                {typeof post.user === 'string' ? post.user : post.user.username || 'Unknown User'}
-              </Typography>
-              {isAuthor && (
-                <Chip label="You" size="small" variant="outlined" color="primary" sx={{ fontSize: '0.7rem', height: 20 }} />
-              )}
-            </Box>
-          }
-          subheader={
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.9rem' }}>
-              {formatDate(post.createdAt)}
-            </Typography>
-          }
-          sx={{ pb: 1 }}
-        />
-
-        {post.imageUrl && (
-          <CardMedia
-            component="img"
-            sx={{ height: 350, objectFit: 'cover', backgroundColor: 'grey.100' }}
-            image={getImageUrl(post.imageUrl)}
-            alt={post.title || 'Post image'}
-            onError={(e) => {
-              e.target.style.display = 'none';
-            }}
+    <>
+      <Fade in timeout={300}>
+        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider', opacity: isDeleting ? 0.5 : 1 }}>
+          {/* Card Header */}
+          <CardHeader
+            avatar={
+              <Avatar sx={{ bgcolor: 'primary.main' }}>
+                {typeof post.user === 'string' 
+                  ? post.user.charAt(0).toUpperCase()
+                  : post.user.username?.charAt(0).toUpperCase() || '?'}
+              </Avatar>
+            }
+            title={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography fontWeight="bold">
+                  {typeof post.user === 'string' ? post.user : post.user.username || 'Unknown'}
+                </Typography>
+                {isAuthor && <Chip label="You" size="small" variant="outlined" />}
+              </Box>
+            }
+            subheader={formatDate(post.createdAt)}
           />
-        )}
 
-        <CardContent sx={{ pb: 1 }}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'text.primary', mb: 1.5 }}>
-            {post.title || 'Untitled Post'}
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.6, fontSize: '0.95rem' }}>
-            {post.description || 'No description available.'}
-          </Typography>
-        </CardContent>
-
-        <CardActions disableSpacing sx={{ justifyContent: 'space-between', px: 2, py: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Tooltip title={user ? (isLiked ? 'Unlike' : 'Like') : 'Login to like'}>
-              <IconButton onClick={handleLike} disabled={isDeleting || isLiking || !user} type="button" sx={{ color: isLiked ? 'error.main' : 'text.secondary' }}>
-                {isLiked ? <Favorite /> : <FavoriteBorder />}
-              </IconButton>
-            </Tooltip>
-            <Typography variant="body2" color="text.secondary" sx={{ minWidth: 20, fontWeight: 500 }}>
-              {likesCount}
-            </Typography>
-
-            <Tooltip title="Comments">
-              <IconButton onClick={toggleComments} disabled={isDeleting} type="button" sx={{ color: showComments ? 'primary.main' : 'text.secondary' }}>
-                <Comment />
-              </IconButton>
-            </Tooltip>
-            <Typography variant="body2" color="text.secondary" sx={{ minWidth: 20, fontWeight: 500 }}>
-              {commentsCount}
-            </Typography>
-
-            <Tooltip title="Share">
-              <IconButton onClick={handleShare} disabled={isDeleting} type="button" sx={{ color: 'text.secondary' }}>
-                <Share />
-              </IconButton>
-            </Tooltip>
-          </Box>
-
-          {isAuthor && (
-            <Box sx={{ display: 'flex', gap: 0.5 }}>
-              <Tooltip title="Edit Post">
-                <IconButton component={RouterLink} to={`/posts/edit/${post._id}`} disabled={isDeleting} size="small" type="button">
-                  <Edit fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Delete Post">
-                <IconButton onClick={handleDelete} disabled={isDeleting} size="small" type="button">
-                  <Delete fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Box>
+          {/* Post Image */}
+          {post.imageUrl && (
+            <CardMedia
+              component="img"
+              height="350"
+              image={getImageUrl(post.imageUrl)}
+              alt={post.title}
+              onError={(e) => e.target.style.display = 'none'}
+            />
           )}
-        </CardActions>
 
-        {showComments && (
-          <CommentsSection
-            postId={post._id}
-            onCommentsUpdate={handleCommentsUpdate}
-            existingComments={post.comments}
-          />
-        )}
-      </Card>
-    </Fade>
+          {/* Post Content */}
+          <CardContent>
+            <Typography variant="h6" gutterBottom fontWeight="bold">
+              {post.title || 'Untitled Post'}
+            </Typography>
+            <Typography variant="body1" color="text.secondary" whiteSpace="pre-wrap">
+              {post.description || 'No description available.'}
+            </Typography>
+          </CardContent>
+
+          {/* Card Actions */}
+          <CardActions disableSpacing sx={{ justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Tooltip title={user ? (isLiked ? 'Unlike' : 'Like') : 'Login to like'}>
+                <IconButton onClick={handleLike} disabled={!user} sx={{ color: isLiked ? 'error.main' : 'inherit' }}>
+                  {isLiked ? <Favorite /> : <FavoriteBorder />}
+                </IconButton>
+              </Tooltip>
+              <Typography>{likesCount}</Typography>
+
+              <Tooltip title="Comments">
+                <IconButton onClick={handleCommentsToggle}>
+                  <Comment color={showComments ? 'primary' : 'inherit'} />
+                </IconButton>
+              </Tooltip>
+              <Typography>{commentsCount}</Typography>
+
+              <Tooltip title="Share">
+                <IconButton onClick={handleShare}>
+                  <Share />
+                </IconButton>
+              </Tooltip>
+            </Box>
+
+            {isAuthor && (
+              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                <Tooltip title="Edit Post">
+                  <IconButton component={RouterLink} to={`/posts/edit/${post._id}`}>
+                    <Edit fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Delete Post">
+                  <IconButton onClick={() => setDeleteDialogOpen(true)}>
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            )}
+          </CardActions>
+
+          {/* Comments Section */}
+          {showComments && (
+            <CommentsSection
+              postId={post._id}
+              onCommentsUpdate={handleCommentsUpdate}
+            />
+          )}
+        </Card>
+      </Fade>
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        aria-labelledby="delete-dialog-title"
+      >
+        <DialogTitle id="delete-dialog-title">Delete Post</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this post? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDeleteConfirm} 
+            color="error" 
+            disabled={isDeleting}
+            startIcon={<Delete />}
+          >
+            {isDeleting ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 });
 

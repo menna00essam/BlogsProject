@@ -13,9 +13,19 @@ const MainLayout = ({ children }) => {
     >
       <CssBaseline />
       <Header />
-      <Container component="main" sx={{ mt: 4, mb: 4, flexGrow: 1 }}>
-        {children}
-      </Container>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          pt: 8, 
+          mt: 4,
+          mb: 4,
+        }}
+      >
+        <Container>
+          {children}
+        </Container>
+      </Box>
       <Footer />
     </Box>
   );

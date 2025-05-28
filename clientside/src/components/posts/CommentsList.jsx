@@ -15,9 +15,7 @@ import {
   DialogActions,
   Button
 } from '@mui/material';
-import {
-  Delete as DeleteIcon,
-} from '@mui/icons-material';
+import { Delete as DeleteIcon } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../hooks/useAuth';
 import postsService from '../../services/postsService';
@@ -39,11 +37,11 @@ const CommentsList = ({ comments = [], onCommentDeleted }) => {
     setLoading(true);
     try {
       await postsService.deleteComment(commentToDelete._id);
-      
+
       if (onCommentDeleted) {
         onCommentDeleted(commentToDelete._id);
       }
-      
+
       setDeleteDialogOpen(false);
       setCommentToDelete(null);
     } catch (err) {
@@ -64,7 +62,7 @@ const CommentsList = ({ comments = [], onCommentDeleted }) => {
       const date = new Date(dateString);
       const now = new Date();
       const diffInMinutes = Math.floor((now - date) / (1000 * 60));
-      
+
       if (diffInMinutes < 1) return 'just now';
       if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
       if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
@@ -120,7 +118,7 @@ const CommentsList = ({ comments = [], onCommentDeleted }) => {
                         {formatDate(comment.createdAt)}
                       </Typography>
                     </Box>
-                    
+
                     {user && comment.author?._id === user._id && (
                       <IconButton
                         size="small"
@@ -167,9 +165,9 @@ const CommentsList = ({ comments = [], onCommentDeleted }) => {
           <Button onClick={handleDeleteCancel} disabled={loading}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleDeleteConfirm} 
-            color="error" 
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
             disabled={loading}
             variant="contained"
           >
