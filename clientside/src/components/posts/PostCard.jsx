@@ -52,7 +52,7 @@ const PostCard = memo(({ post: initialPost, onPostUpdate, onPostDelete }) => {
   const getImageUrl = (url) => {
     if (!url) return null;
     if (url.startsWith('http')) return url;
-    return `${import.meta.env.VITE_API_URL}/${url}`;
+    return `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/${url}`;
   };
 
   const handleDeleteConfirm = async () => {
