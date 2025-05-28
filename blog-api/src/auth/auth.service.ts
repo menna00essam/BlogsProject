@@ -20,7 +20,7 @@ export class AuthService {
 
     const isMatch = await bcrypt.compare(pass, user.password);
     if (isMatch) {
-      const { password, ...result } = user.toObject(); // remove password
+      const { password, ...result } = user.toObject(); 
       return result;
     }
 

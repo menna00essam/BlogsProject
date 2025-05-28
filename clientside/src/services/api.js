@@ -7,23 +7,43 @@ const api = axios.create({
  
 });
 
+// api.interceptors.request.use(
+//   (config) => {
+//     const token = localStorage.getItem('token');
+//     if (token) {
+//       config.headers['Authorization'] = `Bearer ${token}`;
+//     }
+    
+//     console.log('API Request:', {
+//       method: config.method?.toUpperCase(),
+//       url: config.baseURL + config.url,
+//       headers: config.headers
+//     });
+    
+//     return config;
+//   },
+//   (error) => Promise.reject(error)
+// );
+
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
-    if (token) {
+    if (token && !config.url.includes('/auth/register')) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
     
     console.log('API Request:', {
       method: config.method?.toUpperCase(),
       url: config.baseURL + config.url,
-      headers: config.headers
+      headers: config.headers,
+      body: config.data
     });
     
     return config;
   },
   (error) => Promise.reject(error)
 );
+
 
 api.interceptors.response.use(
   (response) => {

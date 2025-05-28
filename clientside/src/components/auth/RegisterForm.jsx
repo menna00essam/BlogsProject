@@ -28,7 +28,6 @@ const RegisterForm = () => {
       [e.target.name]: e.target.value
     });
     
-    // Validate password match
     if (e.target.name === 'confirmPassword' || e.target.name === 'password') {
       if (e.target.name === 'password' && formData.confirmPassword && e.target.value !== formData.confirmPassword) {
         setPasswordError('Passwords do not match');
