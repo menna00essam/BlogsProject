@@ -30,7 +30,6 @@ export class CommentsController {
       throw new NotFoundException(`Comment with ID ${id} not found`);
     }
     
-    // التأكد من أن المستخدم يملك الكومنت
     if (comment.author.toString() !== req.user.userId) {
       throw new ForbiddenException('You can only delete your own comments');
     }
